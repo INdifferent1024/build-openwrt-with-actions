@@ -63,6 +63,19 @@ jobs:
           npm_prune: "True"
           npm_clean: "True"
           os_swap: "True"
+          
+          - name: Free up more disk space
+  run: |
+    sudo apt clean
+    sudo rm -rf /usr/share/dotnet
+    sudo rm -rf /opt/ghc
+    sudo rm -rf /usr/local/share/boost
+    sudo rm -rf /usr/lib/firefox
+    sudo rm -rf /usr/share/swift
+    sudo rm -rf /usr/lib/jvm
+    sudo rm -rf /usr/local/lib/android
+    sudo rm -rf /usr/lib/mono
+    df -hT
 
       - name: Freeing up disk space
         uses: easimon/maximize-build-space@master
