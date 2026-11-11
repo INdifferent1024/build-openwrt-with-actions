@@ -163,10 +163,25 @@ jobs:
         if: ${{inputs.ssh == false}}
         run: cp -f .config openWRT/
 
+      - name: 补全配置 (defconfig to fill missing options)
+        working-directory: openWRT
+        run: |
+          # 关键: .config 是精简版, 缺少必需项会导致 make 触发交互式 menuconfig
+          # 用 defconfig 自动补全所有必需项
+          echo "=== Before defconfig ==="
+          wc -l .config
+          make defconfig 2>&1 | tail -20
+          echo "=== After defconfig ==="
+          wc -l .config
+          echo "--- 关键项确认 ---"
+          grep -E "^CONFIG_TARGET_qualcommax=y|^CONFIG_TARGET_qualcommax_ipq50xx=y|DEVICE_redmi_ax3000=y|^CONFIG_PACKAGE_ua2f=y|^CONFIG_PACKAGE_kmod-nfnetlink-queue=y" .config || echo "WARNING: some key options missing"
+
       - name: 多线程编译 openWRT (Build openWRT multithreading)
         if: ${{inputs.multithreading == true}}
         working-directory: openWRT
-        run: make -j$(nproc) V=s
+        run: |
+          export TERM=xterm
+          make -j$(nproc) V=s
 
       - name: 单线程编译 openWRT (Build openWRT single thread)
         if: ${{inputs.multithreading == false}}
