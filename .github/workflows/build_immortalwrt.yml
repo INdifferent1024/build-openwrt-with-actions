@@ -67,7 +67,7 @@ jobs:
       - name: Freeing up disk space
         uses: easimon/maximize-build-space@master
         with:
-          root-reserve-mb: 8192
+          root-reserve-mb: 3072
           swap-size-mb: 1
           remove-dotnet: "true"
           remove-android: "true"
@@ -84,6 +84,14 @@ jobs:
 
       - name: 下载编译所需的依赖 (Install the software packages required for compilation)
         run: |
+          # ===== 关键修复: apt 缓存目录重定向到 107GB 的 buildlv =====
+          # 原因: maximize-build-space 后根分区只剩 ~100MB, 装不下 102MB 的 apt 包
+          # 而 /home/runner/work (buildvg-buildlv) 有 107GB 空闲
+          sudo mkdir -p /home/runner/apt-cache/archives/partial
+          sudo chmod -R 777 /home/runner/apt-cache
+          echo 'Dir::Cache::archives "/home/runner/apt-cache/archives";' | sudo tee /etc/apt/apt.conf.d/99-acdcache
+          echo "=== apt cache dir set to /home/runner/apt-cache ==="
+          df -h /home/runner/apt-cache / | tail -2
           # 1️⃣ 将临时目录指向 Runner 主磁盘，避开 /tmp tmpfs 限制
           export TMPDIR=$RUNNER_TEMP
           sudo mkdir -p $TMPDIR
